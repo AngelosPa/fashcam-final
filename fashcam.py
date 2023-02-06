@@ -13,15 +13,11 @@ from io import StringIO, BytesIO
 from keras.applications.imagenet_utils import preprocess_input
 import cv2
 from keras.models import load_model, model_from_json
-
-# resnet50
-
-
+# import feature_extraction_cosine
+import feature_extraction_cosine
 df = pd.read_csv('styles.csv', error_bad_lines=False)
 
 
-# unique_types = ['Jeans', 'Shirts', 'Watches', 'Track Pants', 'Tshirts', 'Socks', 'Casual Shoes', 'Belts', 'Flip Flops', 'Handbags', 'Tops', 'Bra', 'Sandals', 'Shoe Accessories', 'Sweatshirts', 'Deodorant', 'Formal Shoes', 'Bracelet', 'Lipstick', 'Flats', 'Kurtas', 'Waistcoat', 'Sports Shoes', 'Shorts', 'Briefs', 'Sarees', 'Perfume and Body Mist', 'Heels', 'Sunglasses', 'Innerwear Vests', 'Pendant', 'Nail Polish', 'Laptop Bag', 'Scarves', 'Rain Jacket', 'Dresses', 'Night suits', 'Skirts', 'Wallets', 'Blazers', 'Ring', 'Kurta Sets', 'Clutches', 'Shrug', 'Backpacks', 'Caps', 'Trousers', 'Earrings', 'Camisoles', 'Boxers', 'Jewellery Set', 'Dupatta', 'Capris', 'Lip Gloss', 'Bath Robe', 'Mufflers', 'Tunics', 'Jackets', 'Trunk', 'Lounge Pants', 'Face Wash and Cleanser', 'Necklace and Chains', 'Duffel Bag', 'Sports Sandals', 'Foundation and Primer',
-#                 'Sweaters', 'Free Gifts', 'Trolley Bag', 'Tracksuits', 'Swimwear', 'Shoe Laces', 'Fragrance Gift Set', 'Bangle', 'Nightdress', 'Ties', 'Baby Dolls', 'Leggings', 'Highlighter and Blush', 'Travel Accessory', 'Kurtis', 'Mobile Pouch', 'Messenger Bag', 'Lip Care', 'Face Moisturisers', 'Compact', 'Eye Cream', 'Accessory Gift Set', 'Beauty Accessory', 'Jumpsuit', 'Kajal and Eyeliner', 'Water Bottle', 'Suspenders', 'Lip Liner', 'Robe', 'Salwar and Dupatta', 'Patiala', 'Stockings', 'Eyeshadow', 'Headband', 'Tights', 'Nail Essentials', 'Churidar', 'Lounge Tshirts', 'Face Scrub and Exfoliator', 'Lounge Shorts', 'Gloves', 'Mask and Peel', 'Wristbands', 'Tablet Sleeve', 'Ties and Cufflinks', 'Footballs', 'Stoles', 'Shapewear', 'Nehru Jackets', 'Salwar', 'Cufflinks', 'Jeggings', 'Hair Colour', 'Concealer', 'Rompers', 'Body Lotion']
 unique_types = ['Backpacks',
                 'Belts',
                 'Bra',
@@ -89,6 +85,19 @@ file = st.sidebar.file_uploader(
     "Choose an image from your computer", type=["jpg", "jpeg", "png"])
 
 
+def image_extractor(image_raw):
+    size = (224, 224)
+    #size = (28, 28)
+    image_raw = ImageOps.fit(image_raw, size, Image.ANTIALIAS)
+    image_raw = np.asarray(image_raw)
+    # img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image_raw = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
+    img_reshape = image_raw[np.newaxis, ...]
+    img_reshape = img_reshape[..., np.newaxis]
+
+    return img_reshape
+
+
 def import_and_predict(image_data, model):
     size = (224, 224)
     #size = (28, 28)
@@ -99,6 +108,7 @@ def import_and_predict(image_data, model):
     img_reshape = img[np.newaxis, ...]
     img_reshape = img_reshape[..., np.newaxis]
     prediction = model.predict(img_reshape)
+
     return prediction
 
 
@@ -117,3 +127,15 @@ else:
     predictions = import_and_predict(image, model)
     result = st.write("we are searching in our shop for similar " +
                       unique_types[np.argmax(predictions)])
+
+# display the 3 images in a row
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.image(feature_extraction_cosine.get_closest_images(
+            image, unique_types[np.argmax(predictions)])[0])
+    with col2:
+        st.image(feature_extraction_cosine.get_closest_images(
+            image, unique_types[np.argmax(predictions)])[1])
+    with col3:
+        st.image(feature_extraction_cosine.get_closest_images(
+            image, unique_types[np.argmax(predictions)])[2])
